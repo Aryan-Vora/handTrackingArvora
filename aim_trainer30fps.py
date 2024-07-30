@@ -309,7 +309,6 @@ def find_points_on_line_3d(x1, y1, z1, x2, y2, z2, I, J, K, dist, sign):
 
     return new_x, new_y, new_z
 
-
 def hand_tracking():
     tof = Tof()
     
@@ -359,6 +358,7 @@ def hand_tracking():
     default_value = 0
     frame_count = 0
     frame_generated = 0
+    depth_update_count = 0  # Counter for depth update synchronization
     # Store hand length
     input_display = np.zeros((WIDTH, HEIGHT, 3), dtype=np.uint8)
     
@@ -373,8 +373,12 @@ def hand_tracking():
             break
         input_display.fill(0)
         frame_count += 1
-        # Get frame data from ToF sensor
-        median_range, real_distance, peak_rate = tof.get_frame()
+        depth_update_count += 1
+
+        # Get frame data from ToF sensor every 2nd frame (15fps)
+        if depth_update_count % 2 == 0:
+            median_range, real_distance, peak_rate = tof.get_frame()
+            depth_update_count = 0
 
         # Convert image to RGB
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -522,18 +526,20 @@ def hand_tracking():
                 sock.sendto(str.encode(str(data)), serverAddressPort)
         
                 # Display the average depth of the hand on the image
-                text = f"hand avg depth: ({round((hand_average_z),3)})"
-                cv2.putText(img, text, (10, 650), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, ), 2)
-                cv2.putText(input_display, text, (10, 650), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, ), 2)
+                # text = f"hand avg depth: ({round((hand_average_z),3)})"
+                # cv2.putText(input_display, text, (10, 650), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 hand_distances.append((x,y, hand_average_z))
+
+        # Update ball position every frame (30fps)
         if len(hand_distances) > 0 and hand_distances[-1][2] != 0:
             # Calculate the size of the dot inversely proportional to the depth
             depth = hand_distances[-1][2]
-            dot_size = max(1, int(1000 / depth)) 
+            # dot_size = max(1, int(1000 / depth)) 
+            dot_size = 25
             cv2.circle(input_display, (int(hand_distances[-1][0]), int(hand_distances[-1][1])), dot_size, (0, 255, 0), -1)
         
-        #simple game where a square is generated every 20th frame and the user has to click on it 
-        #generate every 20 frames if there is not an already exisiting square
+        # Simple game where a square is generated every 20th frame and the user has to click on it 
+        # Generate every 20 frames if there is not an already existing square
         if frame_count % 20 == 0 and not existing:
             target_x = np.random.randint(0, HEIGHT-200)
             target_y = np.random.randint(0, WIDTH-200)
@@ -556,17 +562,15 @@ def hand_tracking():
         #cv2.putText(img, f"FPS: {int(fps)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(input_display, f"FPS: {int(fps)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-        #show point counter
+        # Show point counter
         cv2.putText(input_display, f"Points: {points}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.imshow('img', input_display)
         
-
         # Exit the program
         if cv2.waitKey(1) & 0xFF == ord('q') or cv2.getWindowProperty("img", cv2.WND_PROP_VISIBLE) < 1:
             break
 
     cap.release()
     cv2.destroyAllWindows()
-
 if __name__ == '__main__':
     hand_tracking()
