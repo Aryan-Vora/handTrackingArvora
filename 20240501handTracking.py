@@ -866,7 +866,7 @@ def find_points_on_line_3d(x1, y1, z1, x2, y2, z2, I, J, K, dist, sign):
     
 def hand_tracking():
     tof = Tof()
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     mpHands = mp.solutions.hands
     hands = mpHands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5)
     mpDraw = mp.solutions.drawing_utils
