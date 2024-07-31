@@ -6,7 +6,10 @@ mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
 mp_drawing = mp.solutions.drawing_utils
 
-# Define gesture detection function
+#Extremely simple gesture detection function 
+#shows how it could be used but is not intended to be very accurate
+#meant to be used with webcam or camera facing the user
+
 def determine_gesture(hand_landmarks):
     thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y
     thumb_ip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP].y
